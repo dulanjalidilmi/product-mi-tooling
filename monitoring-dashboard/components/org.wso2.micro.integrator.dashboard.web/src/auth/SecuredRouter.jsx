@@ -45,6 +45,7 @@ import LocalEntryDetailsPage from "../resource-pages/LocalEntryDetailsPage";
 import InboundEndpointDetailPage from "../resource-pages/InboundEndpointDetailsPage";
 import TaskListPage from "../resource-pages/TaskListPage";
 import CAppListPage from "../resource-pages/CappListPage";
+import ClusterPage from "../resource-pages/ClusterPage";
 import Users from "../resource-pages/Users";
 import UserDetailsPage from "../resource-pages/UserDetailsPage";
 import DataServicesListPage from "../resource-pages/DataservicesListPage"
@@ -107,6 +108,7 @@ export default class SecuredRouter extends Component {
                 <Route path='/task/explore' component={TaskDetailsPage}/>
                 <Route exact path='/home' component={HomePage}/>
                 <Route exact path='/capp' component={CAppListPage}/>
+                <Route exact path='/cluster' component={ClusterPage}/>
                 <Route exact path='/users' component={Users}/>
                 <Route path='/users/explore' component={UserDetailsPage}/>
                 <Route exact path='/dataservice' component={DataServicesListPage}/>

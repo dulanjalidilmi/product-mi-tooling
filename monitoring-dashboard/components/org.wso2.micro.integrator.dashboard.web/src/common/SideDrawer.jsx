@@ -111,6 +111,10 @@ export default function SideDrawer() {
                         <ListItemIcon><CappIcon style={{color:'#065e9b'}}/></ListItemIcon>
                         <ListItemText primary="Carbon Applications"/>
                     </ListItem>
+                    <ListItem button component={Link} to={"/cluster"}>
+                        <ListItemIcon><CappIcon style={{color:'#065e9b'}}/></ListItemIcon>
+                        <ListItemText primary={"Cluster"}/>
+                    </ListItem>
                     <ListItem button component={Link} to="/logs">
                         <ListItemIcon><LogFilesIcon style={{color:'#065e9b'}}/></ListItemIcon>
                         <ListItemText primary="Log Files"/>
