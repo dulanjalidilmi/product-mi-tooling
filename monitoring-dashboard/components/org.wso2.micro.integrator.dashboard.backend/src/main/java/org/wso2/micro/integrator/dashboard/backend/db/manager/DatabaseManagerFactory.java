@@ -22,12 +22,11 @@ package org.wso2.micro.integrator.dashboard.backend.db.manager;
 
 public class DatabaseManagerFactory {
 
-    public DatabaseManager getDatabaseManager(String url) {
-        switch (url) {
+    public DatabaseManager getDatabaseManager(String dbType) {
+        switch (dbType) {
             case "h2" :
                 return new JDBCDatabaseManager();
             default:
-                // todo tobe verified
                 throw new RuntimeException("db type not fround");
         }
     }

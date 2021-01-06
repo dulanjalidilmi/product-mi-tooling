@@ -27,21 +27,21 @@ import java.sql.SQLException;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.micro.integrator.dashboard.backend.commons.Constants;
 import org.wso2.micro.integrator.dashboard.backend.exception.DashboardServerException;
 import org.wso2.micro.integrator.dashboard.backend.rest.model.HeatbeatSignalRequestBody;
 
-public class JDBCDatabaseManager implements DatabaseManager {
+import javax.sql.DataSource;
+
+public final class JDBCDatabaseManager implements DatabaseManager {
 
     private static final Log log = LogFactory.getLog(JDBCDatabaseManager.class);
+    private final DataSource ds;
 
-    private static HikariConfig config = new HikariConfig();
-    private static HikariDataSource ds;
-
-    static {
+    JDBCDatabaseManager() {
+        HikariConfig config = new HikariConfig();
         config.setJdbcUrl(System.getProperty(Constants.DATABASE_URL));
         config.setUsername(System.getProperty(Constants.DATABASE_USERNAME));
         config.setPassword(System.getProperty(Constants.DATABASE_PASSWORD));
@@ -79,7 +79,7 @@ public class JDBCDatabaseManager implements DatabaseManager {
     @Override
     public int insertHeartbeat(HeatbeatSignalRequestBody heartbeat) {
         String query = "INSERT INTO HEARTBEAT VALUES ('" + heartbeat.getGroupId() + "','" + heartbeat.getNodeId()
-                           + "'," + heartbeat.getInterval() + ",CURRENT_TIMESTAMP());";
+                       + "'," + heartbeat.getInterval() + ",CURRENT_TIMESTAMP());";
         return updateDatabase(query);
     }
 
@@ -97,53 +97,20 @@ public class JDBCDatabaseManager implements DatabaseManager {
         return updateDatabase(query);
     }
 
-    @Override
-    public boolean checkIfNodeRegistered(HeatbeatSignalRequestBody heartbeat) {
-        String query = "SELECT COUNT(*) FROM HEARTBEAT WHERE GROUP_ID='" + heartbeat.getGroupId()
-                           + "' AND NODE_ID='" + heartbeat.getNodeId() + "';";
-
-        boolean nodeRegistered = false;
-        Connection con = null;
-        PreparedStatement pst = null;
-        try {
-            con = getConnection();
-            pst = con.prepareStatement(query);
-            ResultSet resultSet = pst.executeQuery();
-            resultSet.next();
-            if (resultSet.getInt(1) == 1) {
-                nodeRegistered = true;
-            }
-        } catch (SQLException e) {
-            throw new DashboardServerException("Error occurred while check node registration status data using query : " + query, e);
-        } finally {
-            try {
-                if (pst != null) {
-                    pst.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-        return nodeRegistered;
-    }
-
-    @Override
-    public String retrieveTimestampOfRegisteredNode(HeatbeatSignalRequestBody heartbeat) {
+    public String retrieveTimestampOfHeartBeat(HeatbeatSignalRequestBody heartbeat) {
         String query = "SELECT TIMESTAMP FROM HEARTBEAT WHERE GROUP_ID='" + heartbeat.getGroupId() + "' AND NODE_ID='"
                        + heartbeat.getNodeId() + "';";
-        // todo to check if this is correct
         Connection con = null;
         PreparedStatement pst = null;
         try {
             con = getConnection();
             pst = con.prepareStatement(query);
             ResultSet resultSet = pst.executeQuery();
-            resultSet.next();
-            return resultSet.getString(1);
-            // todo check all exception messages
+            if (resultSet.next()) {
+                return resultSet.getString(1);
+            } else {
+                return null;
+            }
         } catch (SQLException e) {
             throw new DashboardServerException("Error occurred while retrieveTimestampOfRegisteredNode results.", e);
         } finally {
@@ -161,10 +128,10 @@ public class JDBCDatabaseManager implements DatabaseManager {
     }
 
     @Override
-    public boolean checkIfNodeDeregistered(HeatbeatSignalRequestBody heartbeat, String initialTimestamp) {
+    public boolean checkIfTimestampExceedsInitial(HeatbeatSignalRequestBody heartbeat, String initialTimestamp) {
         String query = "SELECT COUNT(*) FROM HEARTBEAT WHERE TIMESTAMP>'" + initialTimestamp + "' AND GROUP_ID='"
                        + heartbeat.getGroupId() + "' AND NODE_ID='" + heartbeat.getNodeId() + "';";
-        boolean nodeDeregistered = false;
+        boolean isExists = false;
         Connection con = null;
         PreparedStatement pst = null;
         try {
@@ -172,8 +139,8 @@ public class JDBCDatabaseManager implements DatabaseManager {
             pst = con.prepareStatement(query);
             ResultSet resultSet = pst.executeQuery();
             resultSet.next();
-            if (resultSet.getInt(1) == 0) {
-                nodeDeregistered = true;
+            if (resultSet.getInt(1) == 1) {
+                isExists = true;
             }
         } catch (SQLException e) {
             throw new DashboardServerException("Error occurred while retrieving next row.", e);
@@ -189,69 +156,10 @@ public class JDBCDatabaseManager implements DatabaseManager {
                 e.printStackTrace();
             }
         }
-        return nodeDeregistered;
+        return isExists;
     }
 
-    @Override
-    public String getUpsertQuery(DatabaseQueryObject databaseQueryObject) {
-        StringBuilder query = new StringBuilder();
-        query.append("MERGE INTO ").append(databaseQueryObject.getTableName()).append(" (");
-        for (String col: databaseQueryObject.getInsertColumns()) {
-            query.append(col).append(",");
-        }
-        query.deleteCharAt(query.length()-1);
-        query.append(") VALUES (");
-        for (String value : databaseQueryObject.getInsertValues()) {
-            query.append(value).append(",");
-        }
-        query.deleteCharAt(query.length()-1);
-        query.append(");");
-        return query.toString();
-    }
-
-    @Override
-    public String getSelectQuery(DatabaseQueryObject databaseQueryObject) {
-        StringBuilder query = new StringBuilder();
-        query.append("SELECT ");
-        String[] selectColumns = databaseQueryObject.getSelectColumns();
-        if (selectColumns != null || selectColumns.length != 0) {
-            for (String col : selectColumns) {
-                query.append(col).append(",");
-            }
-            query.deleteCharAt(query.length()-1);
-        } else {
-            query.append("*");
-        }
-        query.append(" FROM ").append(databaseQueryObject.getTableName());
-        String selectCondition = databaseQueryObject.getSelectCondition();
-        if(!StringUtils.isEmpty(selectCondition)) {
-            query.append(" WHERE ").append(selectCondition);
-        }
-        query.append(";");
-        return query.toString();
-    }
-
-    @Override
-    public String getDeleteQuery(DatabaseQueryObject databaseQueryObject) {
-        StringBuilder query = new StringBuilder();
-        query.append("DELETE FROM ").append(databaseQueryObject.getTableName()).append(" WHERE ")
-             .append(databaseQueryObject.getDeleteCondition()).append(";");
-        return query.toString();
-    }
-
-    @Override
-    public String getCountQuery(DatabaseQueryObject databaseQueryObject) {
-        StringBuilder query = new StringBuilder();
-        query.append("SELECT COUNT (*) FROM ").append(databaseQueryObject.getTableName());
-        String selectCondition = databaseQueryObject.getSelectCondition();
-        if(!StringUtils.isEmpty(selectCondition)) {
-            query.append(" WHERE ").append(selectCondition);
-        }
-        query.append(";");
-        return query.toString();
-    }
-
-    public static Connection getConnection() throws SQLException {
+    private Connection getConnection() throws SQLException {
         return ds.getConnection();
     }
 

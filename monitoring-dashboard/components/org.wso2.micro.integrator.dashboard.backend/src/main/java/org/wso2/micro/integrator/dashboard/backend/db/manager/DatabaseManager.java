@@ -22,13 +22,9 @@ package org.wso2.micro.integrator.dashboard.backend.db.manager;
 
 import org.wso2.micro.integrator.dashboard.backend.rest.model.HeatbeatSignalRequestBody;
 
-import java.sql.ResultSet;
-
 public interface DatabaseManager {
 
     int updateDatabase(String query);
-
-//    ResultSet queryDatabase(String query);
 
     int insertHeartbeat(HeatbeatSignalRequestBody heartbeat);
 
@@ -36,19 +32,8 @@ public interface DatabaseManager {
 
     int deleteHeartbeat(HeatbeatSignalRequestBody heartbeat);
 
-    boolean checkIfNodeRegistered(HeatbeatSignalRequestBody heartbeat);
+    boolean checkIfTimestampExceedsInitial(HeatbeatSignalRequestBody heartbeat, String initialTimestamp);
 
-    String retrieveTimestampOfRegisteredNode(HeatbeatSignalRequestBody heartbeat);
-
-    boolean checkIfNodeDeregistered(HeatbeatSignalRequestBody heartbeat, String initialTimestamp);
-
-    String getUpsertQuery(DatabaseQueryObject databaseQueryObject);
-
-    String getSelectQuery(DatabaseQueryObject databaseQueryObject);
-
-    String getDeleteQuery(DatabaseQueryObject databaseQueryObject);
-
-    String getCountQuery(DatabaseQueryObject databaseQueryObject);
-
+    String retrieveTimestampOfHeartBeat(HeatbeatSignalRequestBody heartbeat);
 
 }

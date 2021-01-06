@@ -27,7 +27,7 @@ import org.wso2.micro.integrator.dashboard.backend.db.manager.DatabaseManagerFac
 public class DatabaseConnection {
     private static DatabaseManager databaseManager;
 
-    public static DatabaseManager getConnection() {
+    public static DatabaseManager getDbManager() {
           if (databaseManager == null) {
               String databaseUrl = System.getProperty(Constants.DATABASE_URL);
               String dbType = DbUtils.getDbType(databaseUrl);
