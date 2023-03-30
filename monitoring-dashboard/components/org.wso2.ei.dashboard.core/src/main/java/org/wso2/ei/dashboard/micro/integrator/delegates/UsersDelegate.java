@@ -64,26 +64,12 @@ public class UsersDelegate {
     public UsersResourceResponse fetchPaginatedUsers(String groupId, String searchKey, 
         String lowerLimit, String upperLimit, String order, String orderBy, String isUpdate) 
         throws ManagementApiException {
+        // todo we can get this to a common place
         log.debug("Fetching Searched Users from MI.");
         log.debug("group id :" + groupId + ", lowerlimit :" + lowerLimit + ", upperlimit: " + upperLimit);
         log.debug("Order:" + order + ", OrderBy:" + orderBy + ", isUpdate:" + isUpdate);
-        int fromIndex = Integer.parseInt(lowerLimit);
-        int toIndex = Integer.parseInt(upperLimit);
-        boolean isUpdatedContent = Boolean.parseBoolean(isUpdate);
-
-        log.debug("prevSearch key :" + prevSearchKey + ", currentSearch key:" + searchKey);
-
-        if (isUpdatedContent || prevSearchKey == null || !(prevSearchKey.equals(searchKey))) {
-            allUserIds = getSearchedUsers(groupId, searchKey);
-            Arrays.sort(allUserIds);
-            count = allUserIds.length;
-        }
-        Users paginatedUsers = getPaginatedUsersResultsFromMI(allUserIds, fromIndex, toIndex, groupId, order, orderBy);
-        UsersResourceResponse usersResourceResponse = new UsersResourceResponse();
-        usersResourceResponse.setResourceList(paginatedUsers);
-        usersResourceResponse.setCount(count);
-        prevSearchKey = searchKey;
-        return usersResourceResponse;
+        return DelegatesUtil.getPaginatedUsersResponse(groupId, searchKey, lowerLimit, upperLimit, order, orderBy,
+                isUpdate);
     }
 
     public Ack addUser(String groupId, AddUserRequest request) throws ManagementApiException {
@@ -141,7 +127,7 @@ public class UsersDelegate {
         return payload;
     }
 
-    private static User[] getSearchedUsers(String groupId, String searchKey) throws ManagementApiException {
+    public static User[] getSearchedUsers(String groupId, String searchKey) throws ManagementApiException {
 
         Users users = new Users();
         NodeList nodeList = dataManager.fetchNodes(groupId);
@@ -154,8 +140,8 @@ public class UsersDelegate {
         return new Gson().fromJson(usersList, User[].class);
     }
 
-    private Users getPaginatedUsersResultsFromMI(User[] users, int lowerLimit, int upperLimit, String groupId,
-                                                 String order, String orderBy) throws ManagementApiException {
+    public static Users getPaginatedUsersResultsFromMI(User[] users, int lowerLimit, int upperLimit, String groupId,
+                                                       String order, String orderBy) throws ManagementApiException {
 
         Users resultList = new Users();
         try {
@@ -192,7 +178,7 @@ public class UsersDelegate {
      * @param resultList list of user details
      * @throws ManagementApiException error occurred while fetching user details.
      */
-    private void fetchUserInfo(User[] users, String groupId, Users resultList)
+    private static void fetchUserInfo(User[] users, String groupId, Users resultList)
             throws ManagementApiException {
         NodeList nodeList = dataManager.fetchNodes(groupId);
         String nodeId = nodeList.get(0).getNodeId();

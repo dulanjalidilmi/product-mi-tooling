@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.wso2.ei.dashboard.core.commons.Constants;
 import org.wso2.ei.dashboard.core.commons.utils.HttpUtils;
 import org.wso2.ei.dashboard.core.commons.utils.ManagementApiUtils;
 import org.wso2.ei.dashboard.core.data.manager.DataManager;
@@ -17,8 +18,13 @@ import org.wso2.ei.dashboard.core.rest.model.ArtifactUpdateRequest;
 import org.wso2.ei.dashboard.core.rest.model.Artifacts;
 import org.wso2.ei.dashboard.core.rest.model.ArtifactsInner;
 import org.wso2.ei.dashboard.core.rest.model.ArtifactsResourceResponse;
+import org.wso2.ei.dashboard.core.rest.model.User;
+import org.wso2.ei.dashboard.core.rest.model.Users;
+import org.wso2.ei.dashboard.core.rest.model.UsersResourceResponse;
+import org.wso2.ei.dashboard.micro.integrator.delegates.UsersDelegate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -35,6 +41,7 @@ public class DelegatesUtil {
     private static final Logger logger = LogManager.getLogger(DelegatesUtil.class);
 
     private static List<ArtifactsInner> searchedArtifacts;
+    private static User[] allUserIds;
     private static String prevSearchKey = null;
     private static String prevResourceType = null;
     private static int count;
@@ -121,7 +128,7 @@ public class DelegatesUtil {
 
         return artifacts;
     }
-    
+//
     public static ArtifactsResourceResponse getPaginatedArtifactResponse(String groupId, List<String> nodeList, 
         String artifactType, String searchKey, String lowerLimit, String upperLimit, String order, String orderBy,
         String isUpdate)
@@ -231,4 +238,30 @@ public class DelegatesUtil {
         return false;
     }
 
+    public static UsersResourceResponse getPaginatedUsersResponse
+            (String groupId, String searchKey, String lowerLimit, String upperLimit, String order,
+             String orderBy, String isUpdate) throws ManagementApiException {
+        String artifactType = Constants.USERS;
+        int fromIndex = Integer.parseInt(lowerLimit);
+        int toIndex = Integer.parseInt(upperLimit);
+        boolean isUpdatedContent = Boolean.parseBoolean(isUpdate);
+
+        logger.debug("Previous Search Key is set to :" + prevSearchKey + " and current search key is set to :"
+                + searchKey);
+        if (isUpdatedContent || prevSearchKey == null || !(prevSearchKey.equals(searchKey)) ||
+                !(prevResourceType.equals(artifactType))) {
+            allUserIds = UsersDelegate.getSearchedUsers(groupId, searchKey);
+            Arrays.sort(allUserIds);
+            count = allUserIds.length;
+        }
+
+        Users paginatedUsers = UsersDelegate.getPaginatedUsersResultsFromMI(allUserIds, fromIndex, toIndex, groupId,
+                order, orderBy);
+        UsersResourceResponse usersResourceResponse = new UsersResourceResponse();
+        usersResourceResponse.setResourceList(paginatedUsers);
+        usersResourceResponse.setCount(count);
+        prevSearchKey = searchKey;
+        prevResourceType = artifactType;
+        return usersResourceResponse;
+    }
 }
