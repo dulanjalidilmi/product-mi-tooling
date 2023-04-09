@@ -46,6 +46,7 @@ function SelectComponent(props) {
     React.useEffect(()=>{
         if (globalGroupId === '' && options.length !== 0) {
             setselectedGroupId(options[0].value)
+            // todo check group id as well upon change
         }
     },[props.groupList]);
 
