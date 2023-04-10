@@ -105,6 +105,8 @@ export default function EnhancedTable(props) {
             }
             HTTPClient.getPaginatedResults(query, page * rowsPerPage, page * rowsPerPage + rowsPerPage, 
                 pageId, order, orderBy, globalGroupId, selectedNodeList, isUpdate).then(response => {
+                    console.log("pageId...." + pageId);
+                    console.log("list...." + response.data.resourceList);
                     setData(response.data.resourceList)
                     setRowCount(response.data.count)
                     dispatch(setIsRefreshed(false))
