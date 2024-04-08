@@ -25,4 +25,6 @@ public final class Constants {
     }
 
     public static final String HEARTBEAT_POOL_SIZE = "heartbeat_pool_size";
+    public static final String IS_FILE_BASED_USER_STORE_ENABLED = "is_file_based_user_store_enabled";
+    public static final String DASHBOARD_TOML_FILE_PATH = "dashboard_toml_file_path";
 }

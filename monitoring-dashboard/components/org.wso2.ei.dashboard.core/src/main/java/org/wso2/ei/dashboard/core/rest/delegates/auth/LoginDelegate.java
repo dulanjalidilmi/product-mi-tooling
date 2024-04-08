@@ -33,11 +33,13 @@ import org.wso2.ei.dashboard.core.rest.delegates.groups.GroupDelegate;
 import org.wso2.ei.dashboard.core.rest.delegates.nodes.NodesDelegate;
 import org.wso2.ei.dashboard.core.rest.model.GroupList;
 import org.wso2.ei.dashboard.core.rest.model.NodeList;
+import org.wso2.ei.dashboard.user.store.FileBasedUserStoreManager;
 
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
 import static org.wso2.ei.dashboard.core.commons.Constants.JWT_COOKIE;
+import static org.wso2.micro.integrator.dashboard.utils.Constants.IS_FILE_BASED_USER_STORE_ENABLED;
 
 /**
  * Manages login received to the dashboard.
@@ -47,6 +49,11 @@ public class LoginDelegate {
     private static final Logger logger = LogManager.getLogger(LoginDelegate.class);
 
     public Response authenticateUser(String username, String password) {
+        // check file based
+        if (Boolean.parseBoolean(System.getProperty(IS_FILE_BASED_USER_STORE_ENABLED))) {
+            boolean isAuthenticated = authenticateFileBasedUser(username, password);
+            logger.info("File based authentication result: " + isAuthenticated);
+        }
         try {
             String accessToken = getTokenFromMI(username, password);
             if (StringUtils.isEmpty(accessToken)) {
@@ -65,6 +72,15 @@ public class LoginDelegate {
             logger.error("Error logging into dashboard server", e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private boolean authenticateFileBasedUser(String username, String password) {
+//        boolean isAuthenticated = FileBasedUserStoreManager.getInstance().authenticate(username, password);
+//        return isAuthenticated;
+        FileBasedUserStoreManager userStoreManager = FileBasedUserStoreManager.getInstance();
+        boolean isAuthenticated = userStoreManager.authenticate(username, password);
+        return isAuthenticated;
+
     }
 
     private String getTokenFromMI(String username, String password) throws ManagementApiException {

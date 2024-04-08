@@ -51,10 +51,7 @@ public class HeartBeatDelegate {
         Ack ack = new Ack(Constants.FAIL_STATUS);
         HeartbeatObject heartbeat = new HeartbeatObject(
                 heartbeatRequest.getProduct(), heartbeatRequest.getGroupId(), heartbeatRequest.getNodeId(),
-                heartbeatRequest.getInterval(), heartbeatRequest.getMgtApiUrl(), currentTimestamp,
-                heartbeatRequest.getChangeNotification().getDeployedArtifacts(),
-                heartbeatRequest.getChangeNotification().getUndeployedArtifacts(),
-                heartbeatRequest.getChangeNotification().getStateChangedArtifacts());
+                heartbeatRequest.getInterval(), heartbeatRequest.getMgtApiUrl(), currentTimestamp);
         if (logger.isDebugEnabled()) {
             logger.debug("Management API URL received is: " + heartbeat.getMgtApiUrl());
         }

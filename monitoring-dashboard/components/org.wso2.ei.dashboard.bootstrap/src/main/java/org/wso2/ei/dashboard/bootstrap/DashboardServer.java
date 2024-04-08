@@ -41,6 +41,8 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.wso2.carbon.securevault.SecretManagerInitializer;
 import org.wso2.config.mapper.ConfigParser;
 import org.wso2.config.mapper.ConfigParserException;
+import org.wso2.ei.dashboard.user.store.FileBasedUserStoreManager;
+import org.wso2.ei.dashboard.user.store.UserInfo;
 import org.wso2.micro.integrator.dashboard.utils.Constants;
 import org.wso2.micro.integrator.dashboard.utils.ExecutorServiceHolder;
 import org.wso2.micro.integrator.dashboard.utils.SSOConfig;
@@ -64,15 +66,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -95,6 +89,7 @@ public class DashboardServer {
     private static final String MI_USERNAME = "mi_username";
     private static final String MI_PASSWORD = "mi_password";
     private static final String TOML_CONF_HEARTBEAT_POOL_SIZE = "heartbeat_config.pool_size";
+    private static final String TOML_FILE_BASED_USER_STORE_ENABLE = "dashboard.file_user_store.enable";
     private static final String SERVER_DIR = "server";
     private static final String WEBAPPS_DIR = "webapps";
     private static final String WWW_DIR = "www";
@@ -120,13 +115,13 @@ public class DashboardServer {
     private static SSOConfig ssoConfig;
     private static Thread shutdownHook;
     private static SecretResolver secretResolver = new SecretResolver();
+    private static String tomlFile = DASHBOARD_HOME + File.separator + CONF_DIR + File.separator + DEPLOYMENT_TOML;
 
     private static final Logger logger = LogManager.getLogger(DashboardServer.class);
 
     public void startServerWithConfigs() {
 
         int serverPort = 9743;
-        String tomlFile = DASHBOARD_HOME + File.separator + CONF_DIR + File.separator + DEPLOYMENT_TOML;
 
         try {
             Map<String, Object> parsedConfigs = parseConfigJS(tomlFile);
@@ -138,7 +133,10 @@ public class DashboardServer {
 
             initSecureVault(parsedConfigs);
             loadConfigurations(parsedConfigs);
-            ssoConfig = generateSSOConfig(parsedConfigs);
+            if (Boolean.parseBoolean(parsedConfigs.get(SSOConstants.TOML_SSO_ENABLE).toString())) {
+                ssoConfig = generateSSOConfig(parsedConfigs);
+            }
+            initializeUserStore(parsedConfigs);
         } catch (SSOConfigException e) {
             logger.error("Error reading SSO configs from TOML file", e);
             System.exit(1);
@@ -160,6 +158,16 @@ public class DashboardServer {
             logger.error("Error while starting up the server", ex);
         }
         logger.info("Stopping the server");
+    }
+
+    private void initializeUserStore(Map<String, Object> parsedConfigs) {
+        if (isFileBasedUserStoreEnabled()) {
+            logger.info("initializeUserStore");
+//            initializeFileBasedUserStore(parsedConfigs);
+//            we are using lazy initialization for file based user store
+        } else {
+            // todo implement this
+        }
     }
 
     private void addShutdownHook() {
@@ -292,7 +300,17 @@ public class DashboardServer {
             jksFileLocation = resolveSecret((String) parsedConfigs.get(TOML_JKS_FILE_LOCATION));
         }
 
+        Object isFileUserStore = parsedConfigs.get(TOML_FILE_BASED_USER_STORE_ENABLE);
+        if (isFileUserStore != null) {
+            properties.put(Constants.IS_FILE_BASED_USER_STORE_ENABLED,
+                    String.valueOf(Boolean.parseBoolean(isFileUserStore.toString())));
+        }
+//        properties.put(Constants.DASHBOARD_TOML_FILE_PATH, tomlFile);
         System.setProperties(properties);
+    }
+
+    protected boolean isFileBasedUserStoreEnabled() {
+        return Boolean.parseBoolean(System.getProperty(Constants.IS_FILE_BASED_USER_STORE_ENABLED));
     }
 
     /**
@@ -337,40 +355,37 @@ public class DashboardServer {
 
     private SSOConfig generateSSOConfig(Map<String, Object> parseResult) throws SSOConfigException {
 
-        if (Boolean.parseBoolean(parseResult.get(SSOConstants.TOML_SSO_ENABLE).toString())) {
-            OIDCAgentConfig oidcAgentConfig = generateOIDCAgentConfig(parseResult);
-            String adminGroupAttribute = SSOConstants.DEFAULT_SSO_ADMIN_GROUP_ATTRIBUTE;
-            if (parseResult.get(SSOConstants.TOML_SSO_ADMIN_GROUP_ATTRIBUTE) instanceof String) {
-                adminGroupAttribute = (String) parseResult.get(SSOConstants.TOML_SSO_ADMIN_GROUP_ATTRIBUTE);
-            }
-            String adminGroups = "";
-            if (parseResult.get(SSOConstants.TOML_SSO_ADMIN_GROUPS) instanceof List) {
-                Gson gson = new Gson();
-                adminGroups = gson.toJson(parseResult.get(SSOConstants.TOML_SSO_ADMIN_GROUPS));
-            }
-            String baseUrl = "";
-            if (parseResult.get(SSOConstants.TOML_SSO_BASE_URL) instanceof String) {
-                baseUrl = (String) parseResult.get(SSOConstants.TOML_SSO_BASE_URL);
-            }
-            String wellKnownEndpointPath = "";
-            if (parseResult.get(SSOConstants.TOML_SSO_WELL_KNOWN_ENDPOINT) instanceof String) {
-                wellKnownEndpointPath = (String) parseResult.get(SSOConstants.TOML_SSO_WELL_KNOWN_ENDPOINT);
-            } else if (baseUrl != null && !baseUrl.isEmpty()) {
-                wellKnownEndpointPath = baseUrl + SSOConstants.DEFAULT_WELL_KNOWN_ENDPOINT_PATH;
-            }
-            String introspectionEndpoint = null;
-            if (parseResult.get(SSOConstants.TOML_SSO_INTROSPECTION_ENDPOINT) instanceof String) {
-                introspectionEndpoint = (String) parseResult.get(SSOConstants.TOML_SSO_INTROSPECTION_ENDPOINT);
-            }
-            String userInfoEndpoint = null;
-            if (parseResult.get(SSOConstants.TOML_SSO_USER_INFO_ENDPOINT) instanceof String) {
-                userInfoEndpoint = (String) parseResult.get(SSOConstants.TOML_SSO_USER_INFO_ENDPOINT);
-            }
-            setJavaxSslTruststore(parseResult);
-            return new SSOConfig(oidcAgentConfig, adminGroupAttribute, adminGroups, wellKnownEndpointPath, baseUrl,
-                                 introspectionEndpoint, userInfoEndpoint);
+        OIDCAgentConfig oidcAgentConfig = generateOIDCAgentConfig(parseResult);
+        String adminGroupAttribute = SSOConstants.DEFAULT_SSO_ADMIN_GROUP_ATTRIBUTE;
+        if (parseResult.get(SSOConstants.TOML_SSO_ADMIN_GROUP_ATTRIBUTE) instanceof String) {
+            adminGroupAttribute = (String) parseResult.get(SSOConstants.TOML_SSO_ADMIN_GROUP_ATTRIBUTE);
         }
-        return null;
+        String adminGroups = "";
+        if (parseResult.get(SSOConstants.TOML_SSO_ADMIN_GROUPS) instanceof List) {
+            Gson gson = new Gson();
+            adminGroups = gson.toJson(parseResult.get(SSOConstants.TOML_SSO_ADMIN_GROUPS));
+        }
+        String baseUrl = "";
+        if (parseResult.get(SSOConstants.TOML_SSO_BASE_URL) instanceof String) {
+            baseUrl = (String) parseResult.get(SSOConstants.TOML_SSO_BASE_URL);
+        }
+        String wellKnownEndpointPath = "";
+        if (parseResult.get(SSOConstants.TOML_SSO_WELL_KNOWN_ENDPOINT) instanceof String) {
+            wellKnownEndpointPath = (String) parseResult.get(SSOConstants.TOML_SSO_WELL_KNOWN_ENDPOINT);
+        } else if (baseUrl != null && !baseUrl.isEmpty()) {
+            wellKnownEndpointPath = baseUrl + SSOConstants.DEFAULT_WELL_KNOWN_ENDPOINT_PATH;
+        }
+        String introspectionEndpoint = null;
+        if (parseResult.get(SSOConstants.TOML_SSO_INTROSPECTION_ENDPOINT) instanceof String) {
+            introspectionEndpoint = (String) parseResult.get(SSOConstants.TOML_SSO_INTROSPECTION_ENDPOINT);
+        }
+        String userInfoEndpoint = null;
+        if (parseResult.get(SSOConstants.TOML_SSO_USER_INFO_ENDPOINT) instanceof String) {
+            userInfoEndpoint = (String) parseResult.get(SSOConstants.TOML_SSO_USER_INFO_ENDPOINT);
+        }
+        setJavaxSslTruststore(parseResult);
+        return new SSOConfig(oidcAgentConfig, adminGroupAttribute, adminGroups, wellKnownEndpointPath, baseUrl,
+                             introspectionEndpoint, userInfoEndpoint);
     }
 
     private OIDCAgentConfig generateOIDCAgentConfig(Map<String, Object> parseResult) throws SSOConfigException {

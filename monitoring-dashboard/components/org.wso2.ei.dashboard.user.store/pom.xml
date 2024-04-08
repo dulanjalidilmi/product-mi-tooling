@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <!--
-  ~ Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+  ~ Copyright (c) 2021, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
   ~
   ~ WSO2 Inc. licenses this file to you under the Apache License,
   ~ Version 2.0 (the "License"); you may not use this file except
@@ -20,21 +21,39 @@
   -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <parent>
-        <artifactId>monitoring-dashboard-parent</artifactId>
+        <artifactId>components</artifactId>
         <groupId>org.wso2.ei</groupId>
         <version>4.3.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
+
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>components</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>org.wso2.ei.dashboard.bootstrap</module>
-        <module>org.wso2.ei.dashboard.core</module>
-        <module>org.wso2.ei.dashboard.user.store</module>
-        <module>org.wso2.micro.integrator.dashboard.utils</module>
-        <module>org.wso2.micro.integrator.dashboard.web</module>
-    </modules>
+    <artifactId>org.wso2.ei.dashboard.user.store</artifactId>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.config.mapper</groupId>
+            <artifactId>config-mapper</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>

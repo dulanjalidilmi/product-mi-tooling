@@ -1,0 +1,6 @@
+<userStores>
+    <fileUserStore>
+        <filePath>/Users/dulanjali/Documents/repos/product-mi-tooling/monitoring-dashboard/components/org.wso2.ei.dashboard.user.store/src/main/resources/userstore-configs.xml</filePath>
+    </fileUserStore>
+    <!-- Additional configurations for JDBCUserStore and LDAPUserStore can be added here -->
+</userStores>

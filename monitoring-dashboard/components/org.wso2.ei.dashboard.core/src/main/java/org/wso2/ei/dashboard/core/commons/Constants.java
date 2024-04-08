@@ -87,4 +87,6 @@ public final class Constants {
 
     public static final String NO_SERVER_FOUND_ERROR =
             "No running micro integrator instances found. Please start a server and login.";
+
+//    public static final String FILE_BASED_USER_STORE = "is_user_store_file_based";
 }

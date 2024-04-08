@@ -12,3 +12,39 @@ password = "admin"
 file_name = "conf/security/dashboard.jks"
 password = "wso2carbon"
 key_password = "wso2carbon"
+
+#are we going to add roles here
+
+[user_store]
+type = "file_based"
+
+[[user_store.users]]
+user.name = "prod_user"
+user.password = "prod_user"
+user.groups = ["prod", "dev"]
+
+[[user_store.users]]
+user.name = "dev_user"
+user.password = "dev_user"
+user.groups = ["prod"]
+
+#[dashboard_userstore]
+#id = "WSO2DashboardDB"
+#url= "jdbc:mysql://localhost:3306/dashboardDb"
+#username= "root"
+#password= "root"
+#driver= "com.mysql.jdbc.Driver"
+#pool_options.maxActive= 50
+#pool_options.maxWait = 60000
+#pool_options.testOnBorrow = true
+
+[[groups]]
+name = "prod"
+mi_username = "prod_admin"
+mi_password = "prod_admin"
+
+[[groups]]
+name = "dev"
+mi_username = "dev_admin"
+mi_password = "dev_admin"
+
