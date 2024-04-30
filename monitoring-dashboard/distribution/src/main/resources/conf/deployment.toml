@@ -4,11 +4,123 @@ port = 9743
 [heartbeat_config]
 pool_size = 15
 
-[mi_user_store]
-username = "admin"
-password = "admin"
-
 [keystore]
 file_name = "conf/security/dashboard.jks"
 password = "wso2carbon"
 key_password = "wso2carbon"
+
+#[file_user_store]
+#enable = false
+
+#[user_store]
+#connection_url = "ldap://localhost:10390"
+#connection_name = "uid=admin,ou=system"
+#connection_password = "admin"
+#user_search_base = "ou=Users,dc=wso2,dc=org"
+#type = "read_write_ldap"
+
+[mi_super_admin]
+username = "miuser"
+password = "miuser"
+
+[bal_service_account]
+username = "abcd"
+password = "abcd"
+
+#[user_store]
+#class = "org.wso2.dashboard.security.user.core.jdbc.JDBCUserStoreManager"
+#type = "database"
+
+#[datasource]
+#id = "WSO2CarbonDB"
+#url= "jdbc:mysql://localhost:3306/userdb"
+#username="root"
+#password="root"
+#driver="com.mysql.jdbc.Driver"
+#pool_options.maxActive=50
+#pool_options.maxWait = 60000
+#pool_options.testOnBorrow = true
+
+#[mi_user_store]
+#username = "admin"
+#password = "admin"
+
+#[file_user_store]
+#enable = true
+#
+[[file.users]]
+user.name = "dilmi"
+user.password = "dilmi"
+user.is_admin = true
+
+[[file.users]]
+user.name = "ndilmi"
+user.password = "ndilmi"
+
+#[user_store]
+#type = "read_only_ldap"
+
+#[user_store]
+#connection_url = "ldap://localhost:10390"
+#connection_name = "uid=admin,ou=system"
+#connection_password = "admin"
+#user_search_base = "ou=Users,dc=wso2,dc=org"
+#type = "read_write_ldap"
+
+
+#[[groups]]
+#name = "abc"
+#mi_username = "abc_admin"
+#mi_password = "abc_admin"
+#
+#[[groups]]
+#name = "xyz"
+#mi_username = "xyz_admin"
+#mi_password = "xyz_admin"
+
+#[sso]
+#enable = true
+#client_id = "VVIp9CWSh7XQf9SM0fEdu5ziEq8a"
+#resource_server_URLs = ["https://localhost:9743"]
+#sign_in_redirect_URL = "https://localhost:9743/sso"
+#override_well_known_endpoint = true
+#authorization_endpoint = "https://localhost:9443/oauth2/authorize"
+#end_session_endpoint = "https://localhost:9443/oidc/logout"
+#jwks_endpoint = "https://localhost:9443/oauth2/jwks"
+#check_session_Iframe_endpoint = "https://localhost:9443/oidc/checksession"
+#revocation_endpoint = "https://localhost:9443/oauth2/revoke"
+#token_endpoint = "https://localhost:9443/oauth2/token"
+#user_info_endpoint = "https://localhost:9443/oauth2/userinfo"
+#jwt_issuer = "https://localhost:9443/oauth2/token"
+#admin_group_attribute = "groups"
+#admin_groups = ["dev_read", "tester"]
+#role_list_attribute = "groups"
+
+[truststore]
+file_name = "conf/security/client-truststore.jks"
+password = "wso2carbon"
+
+# todo add secrets to passwords
+
+#[[datasource]]
+#group_id = "xyz"
+#type = "database"
+#class = "org.wso2.micro.integrator.security.user.core.jdbc.JDBCUserStoreManager"
+#id = "WSO2CarbonDB"
+#url= "jdbc:mysql://localhost:3306/userdbdev"
+#username="root"
+#password="root"
+#driver="com.mysql.jdbc.Driver"
+#pool_options.maxActive=50
+#pool_options.maxWait = 60000
+#pool_options.testOnBorrow = true
+
+#[[datasource.users]]
+#user.name = "dilmi"
+#user.password = "dilmi"
+#user.groups = ["abc", "xyz"]
+#
+#[[datasource.users]]
+#user.name = "xyz_user"
+#user.password = "xyz_user"
+#user.groups = ["abc"]

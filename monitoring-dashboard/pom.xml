@@ -35,7 +35,7 @@
     <modules>
         <module>components</module>
         <module>distribution</module>
-        <module>integration</module>
+<!--        <module>integration</module>-->
     </modules>
 
     <dependencyManagement>
@@ -248,6 +248,16 @@
                 <artifactId>org.wso2.ciphertool</artifactId>
                 <version>${cipher.tool.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.ei</groupId>
+                <artifactId>org.wso2.micro.integrator.security</artifactId>
+                <version>4.3.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.ei</groupId>
+                <artifactId>org.wso2.micro.integrator.core</artifactId>
+                <version>4.3.0-SNAPSHOT</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -323,7 +333,7 @@
         <net.minidev.asm.version>2.4.8</net.minidev.asm.version>
         <net.minidev.json-smart.version>2.4.7</net.minidev.json-smart.version>
         <guava.version>31.1-jre</guava.version>
-        <axiom.version>1.2.11-wso2v17</axiom.version>
+        <axiom.version>1.2.11-wso2v25</axiom.version>
         <cipher.tool.version>1.1.23</cipher.tool.version>
         <maven.war.plugin.version>3.3.2</maven.war.plugin.version>
     </properties>

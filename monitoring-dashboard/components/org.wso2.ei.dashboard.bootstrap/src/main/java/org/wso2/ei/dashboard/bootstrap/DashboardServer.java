@@ -64,15 +64,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -90,10 +82,11 @@ public class DashboardServer {
     private static final String SECURITY_DIR = "security";
     private static final String KEYSTORE_FILE = "dashboard.jks";
     private static final String TOML_CONF_PORT = "server_config.port";
-    private static final String TOML_MI_USERNAME = "mi_user_store.username";
-    private static final String TOML_MI_PASSWORD = "mi_user_store.password";
+    private static final String TOML_MI_USERNAME = "mi_super_admin.username";
+    private static final String TOML_MI_PASSWORD = "mi_super_admin.password";
     private static final String MI_USERNAME = "mi_username";
     private static final String MI_PASSWORD = "mi_password";
+//    private static final String TOML_USER_STORE_TYPE = "user_store.type";
     private static final String TOML_CONF_HEARTBEAT_POOL_SIZE = "heartbeat_config.pool_size";
     private static final String SERVER_DIR = "server";
     private static final String WEBAPPS_DIR = "webapps";
@@ -112,6 +105,9 @@ public class DashboardServer {
     private static final String CARBON_HOME = "carbon.home";
     private static final String SECRET_CONF = "secret-conf.properties";
     private static final String CARBON_CONFIG_DIR = "carbon.config.dir.path";
+//    private static final String USER_STORE_TYPE = "user_store_type";
+    private static final String FILE_BASED_USER_STORE_ENABLE = "file_user_store.enable";
+    private static final String IS_USER_STORE_FILE_BASED = "is.user.store.file.based";
     private static final int EXECUTOR_SERVICE_TERMINATION_TIMEOUT = 5000;
     private static final int DEFAULT_HEARTBEAT_POOL_SIZE = 10;
     private static String keyStorePassword;
@@ -290,6 +286,30 @@ public class DashboardServer {
         jksFileLocation = System.getProperty(JKS_FILE_LOCATION);
         if (StringUtils.isEmpty(jksFileLocation)) {
             jksFileLocation = resolveSecret((String) parsedConfigs.get(TOML_JKS_FILE_LOCATION));
+        }
+
+        if (StringUtils.isEmpty(System.getProperty(FILE_BASED_USER_STORE_ENABLE))) {
+            boolean isFileBased = Boolean.parseBoolean(parsedConfigs.get(FILE_BASED_USER_STORE_ENABLE).toString());
+            if (!isFileBased) {
+                logger.info("File based user store has been disabled.");
+            } else {
+//                todo lets remove this later
+                logger.info("File based user store has been enabled.");
+            }
+            properties.put(IS_USER_STORE_FILE_BASED, String.valueOf(isFileBased));
+        }
+
+//        todo this should be revisited asap
+        if (parsedConfigs.containsKey("datasource")) {
+            List<HashMap<String, Object>> dataSourceList = (List<HashMap<String, Object>>) parsedConfigs.get("datasource");
+            for (int i = 0; i < dataSourceList.size(); i++) {
+                HashMap<String, Object> dataSource = dataSourceList.get(i);
+                String groupID = dataSource.get("group_id").toString();
+                dataSource.forEach((key, value) -> {
+                    String propKey = "datasource." + groupID + "." + key;
+                    properties.setProperty(propKey, value.toString());
+                });
+            }
         }
 
         System.setProperties(properties);
