@@ -91,29 +91,28 @@ public class LogConfigDelegate {
     public List<LogConfigsInner> getSearchedLogConfigsResultsFromMI(String groupId, List<String> nodeList,
         String searchKey, String order, String orderBy) throws ManagementApiException {
 
-        if (nodeList.contains("all")) {
-            NodeList nodes = dataManager.fetchNodes(groupId);
-            nodeList = new ArrayList<>();
-            for (NodeListInner nodeListInner : nodes) {
-                nodeList.add(nodeListInner.getNodeId());
-            }
+        String nodeId = nodeList.get(0);;
+        if (nodeId.equalsIgnoreCase("all")) {
+            NodeList nodes = dataManager.fetchNodes(groupId, Constants.Product.MI);
+            // assumption - In a group, log configs of all nodes in the group should be identical
+            // However we have allowed users to edit log-configs of individual nodes as well. But when viewing
+            // global log-configs we will show the log-configs of one node in the group as the global log-configs
+            nodeId = nodes.get(0).getNodeId(); // get the first node id
         }
 
         LogConfigs logConfigs = new LogConfigs();
 
-        for (String nodeId: nodeList) {
-            String mgtApiUrl = ManagementApiUtils.getMgtApiUrl(groupId, nodeId);
-            String accessToken = dataManager.getAccessToken(groupId, nodeId);
+        String mgtApiUrl = ManagementApiUtils.getMgtApiUrl(groupId, nodeId);
+        String accessToken = dataManager.getAccessToken(groupId, nodeId);
 
-            JsonArray logConfigsArray = DelegatesUtil.getResourceResultList(groupId, nodeId, "logging",
+        JsonArray logConfigsArray = DelegatesUtil.getResourceResultList(groupId, nodeId, "logging",
                 mgtApiUrl, accessToken, searchKey);
 
-            for (JsonElement element : logConfigsArray) {
-                LogConfigsInner logConfigsInner = createLogConfig(element);
-                logConfigs.add(logConfigsInner);
-            }
-
+        for (JsonElement element : logConfigsArray) {
+            LogConfigsInner logConfigsInner = createLogConfig(element);
+            logConfigs.add(logConfigsInner);
         }
+
         //ordering
         Comparator<LogConfigsInner> comparatorObject;
         switch (orderBy) {
